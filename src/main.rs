@@ -1,7 +1,9 @@
-use std::io;
+use std::io::{self, Write};
 
 fn input(prompt: &str) -> String {
-    println!("{prompt}");
+    print!("{prompt}");
+
+    io::stdout().flush().expect("Failed to flush");
 
     let mut resp = String::new();
 
@@ -15,9 +17,9 @@ fn input(prompt: &str) -> String {
 }
 
 fn main() {
-    let name = input("Enter the name of the route:");
-    let grade = input("Enter the grade of the route:");
-    let crag = input("Enter the name of the crag where the route is located:");
+    let name = input("Enter the name of the route: ");
+    let grade = input("Enter the grade of the route: ");
+    let crag = input("Enter the name of the crag where the route is located: ");
 
     println!("Congrats on sending {name} {grade} at {crag}!");
 }
