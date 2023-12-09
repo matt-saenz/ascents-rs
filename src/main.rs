@@ -16,10 +16,25 @@ fn input(prompt: &str) -> String {
     resp.to_string()
 }
 
-fn main() {
+struct Route {
+    name: String,
+    grade: String,
+    crag: String,
+}
+
+fn get_route() -> Route {
     let name = input("Enter the name of the route: ");
     let grade = input("Enter the grade of the route: ");
     let crag = input("Enter the name of the crag where the route is located: ");
 
-    println!("Congrats on sending {name} {grade} at {crag}!");
+    Route { name, grade, crag }
+}
+
+fn main() {
+    let route = get_route();
+
+    println!(
+        "Congrats on sending {} {} at {}!",
+        route.name, route.grade, route.crag,
+    );
 }
