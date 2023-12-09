@@ -1,15 +1,23 @@
 use std::io;
 
-fn main() {
-    println!("Enter the name of the route:");
+fn input(prompt: &str) -> String {
+    println!("{prompt}");
 
-    let mut name = String::new();
+    let mut resp = String::new();
 
     io::stdin()
-        .read_line(&mut name)
+        .read_line(&mut resp)
         .expect("Failed to read line");
 
-    let name = name.trim();
+    let resp: &str = resp.trim();
 
-    println!("Congrats on sending {name}!");
+    resp.to_string()
+}
+
+fn main() {
+    let name = input("Enter the name of the route:");
+    let grade = input("Enter the grade of the route:");
+    let crag = input("Enter the name of the crag where the route is located:");
+
+    println!("Congrats on sending {name} {grade} at {crag}!");
 }
