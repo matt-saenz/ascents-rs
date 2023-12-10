@@ -1,5 +1,8 @@
 use std::io::{self, Write};
 
+mod ascents;
+use ascents::{Ascent, Route};
+
 fn input(prompt: &str) -> String {
     print!("{prompt}");
 
@@ -16,25 +19,22 @@ fn input(prompt: &str) -> String {
     resp.to_string()
 }
 
-struct Route {
-    name: String,
-    grade: String,
-    crag: String,
-}
-
 fn get_route() -> Route {
     let name = input("Enter the name of the route: ");
     let grade = input("Enter the grade of the route: ");
     let crag = input("Enter the name of the crag where the route is located: ");
 
-    Route { name, grade, crag }
+    Route::new(name, grade, crag)
+}
+
+fn get_ascent() -> Ascent {
+    let route = get_route();
+    // TODO: Get/use date of ascent
+
+    Ascent::new(route)
 }
 
 fn main() {
-    let route = get_route();
-
-    println!(
-        "Congrats on sending {} {} at {}!",
-        route.name, route.grade, route.crag,
-    );
+    let ascent = get_ascent();
+    ascents::log_ascent(ascent);
 }
