@@ -1,7 +1,5 @@
+use ascents::{self, Ascent, Route};
 use std::io::{self, Write};
-
-mod ascents;
-use ascents::{Ascent, Route};
 
 fn input(prompt: &str) -> String {
     print!("{prompt}");
