@@ -1,5 +1,8 @@
 use ascents::{self, Ascent, Route};
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    process,
+};
 
 fn input(prompt: &str) -> String {
     print!("{prompt}");
@@ -22,7 +25,13 @@ fn get_route() -> Route {
     let grade = input("Enter the grade of the route: ");
     let crag = input("Enter the name of the crag where the route is located: ");
 
-    Route::new(name, grade, crag)
+    match Route::new(name, grade, crag) {
+        Ok(route) => route,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            process::exit(1);
+        }
+    }
 }
 
 fn get_ascent() -> Ascent {
