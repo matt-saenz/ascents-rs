@@ -1,4 +1,5 @@
 use regex::Regex;
+use time::Date;
 
 pub struct Route {
     name: String,
@@ -20,20 +21,19 @@ impl Route {
 
 pub struct Ascent {
     route: Route,
-    // TODO: Add date
+    date: Date,
 }
 
 impl Ascent {
-    pub fn new(route: Route) -> Self {
-        // TODO: Once added, validate date
-        Self { route }
+    pub fn new(route: Route, date: Date) -> Self {
+        Self { route, date }
     }
 }
 
 pub fn log_ascent(ascent: Ascent) {
     println!(
-        "Logged {} {} at {}",
-        ascent.route.name, ascent.route.grade, ascent.route.crag,
+        "Logged ascent: {} {} at {} on {}",
+        ascent.route.name, ascent.route.grade, ascent.route.crag, ascent.date,
     );
 }
 

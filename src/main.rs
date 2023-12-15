@@ -3,6 +3,7 @@ use std::{
     io::{self, Write},
     process,
 };
+use time::{macros::format_description, Date};
 
 fn input(prompt: &str) -> String {
     print!("{prompt}");
@@ -34,11 +35,25 @@ fn get_route() -> Route {
     }
 }
 
+fn parse_date(date: String) -> Date {
+    let format = format_description!("[year]-[month]-[day]");
+
+    match Date::parse(&date, &format) {
+        Ok(date) => date,
+        Err(_) => {
+            eprintln!("Error: date must be a valid date in YYYY-MM-DD format");
+            process::exit(1);
+        }
+    }
+}
+
 fn get_ascent() -> Ascent {
     let route = get_route();
-    // TODO: Get/use date of ascent
 
-    Ascent::new(route)
+    let date = input("Enter the date of the ascent in YYYY-MM-DD format: ");
+    let date = parse_date(date);
+
+    Ascent::new(route, date)
 }
 
 fn main() {
