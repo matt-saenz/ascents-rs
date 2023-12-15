@@ -8,7 +8,7 @@ pub struct Route {
 
 impl Route {
     pub fn new(name: String, grade: String, crag: String) -> Result<Self, &'static str> {
-        let valid_yds = Regex::new(r"^5\.([0-9]|1[0-5][a-d])$").expect("regex should compile");
+        let valid_yds = Regex::new(r"^5\.([0-9]|1[0-5][a-d])$").expect("Regex should compile");
 
         if !valid_yds.is_match(&grade) {
             return Err("grade must be in YDS with no pluses, minuses, or slashes");
