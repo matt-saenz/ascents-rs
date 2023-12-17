@@ -1,4 +1,5 @@
 use crate::{
+    init,
     models::{Ascent, AscentDB, Route},
     utils::{self, Result},
 };
@@ -6,6 +7,7 @@ use time::{macros::format_description, Date};
 
 pub const USAGE: &str = "Usage: ascents [-h] {init,log,drop,analyze} database";
 
+#[derive(PartialEq)]
 enum Subcommand {
     Init,
     Log,
@@ -81,7 +83,12 @@ fn get_ascent() -> Result<Ascent> {
 }
 
 pub fn run(args: Args) -> Result<()> {
-    let db = AscentDB::new(args.database);
+    if args.subcommand == Subcommand::Init {
+        init::init_ascent_db(&args.database)?;
+        return Ok(());
+    }
+
+    let db = AscentDB::new(args.database)?;
 
     match args.subcommand {
         Subcommand::Log => {

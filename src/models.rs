@@ -1,4 +1,4 @@
-use crate::utils::Result;
+use crate::utils::{self, Result};
 use regex::Regex;
 use std::fmt;
 use time::Date;
@@ -49,8 +49,12 @@ pub struct AscentDB {
 }
 
 impl AscentDB {
-    pub fn new(database: String) -> Self {
-        Self { database }
+    pub fn new(database: String) -> Result<Self> {
+        if !utils::exists(&database) {
+            return Err("database not found, must be an already initialized ascent database");
+        }
+
+        Ok(Self { database })
     }
 
     pub fn log_ascent(&self, ascent: Ascent) {
