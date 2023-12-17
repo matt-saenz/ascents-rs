@@ -4,7 +4,7 @@ use crate::{
 };
 use time::{macros::format_description, Date};
 
-pub const USAGE: &str = "Usage: ascents {init,log,drop,analyze} database";
+pub const USAGE: &str = "Usage: ascents [-h] {init,log,drop,analyze} database";
 
 enum Subcommand {
     Init,
@@ -28,6 +28,12 @@ impl Args {
         };
 
         let subcommand = match subcommand.as_str() {
+            // Immediate successful exit with usage if first arg
+            // was actually a request for help
+            "-h" | "--help" => {
+                println!("{USAGE}");
+                std::process::exit(0);
+            }
             "init" => Subcommand::Init,
             "log" => Subcommand::Log,
             "drop" => Subcommand::Drop,
