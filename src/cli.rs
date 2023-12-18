@@ -1,7 +1,8 @@
 use crate::{
+    error::{Error, Result},
     init,
     models::{Ascent, AscentDB, Route},
-    utils::{self, Result},
+    utils,
 };
 use time::{macros::format_description, Date};
 
@@ -26,7 +27,7 @@ impl Args {
 
         let subcommand = match args.next() {
             Some(arg) => arg,
-            None => return Err("Must provide subcommand"),
+            None => return Err(Error::MissingArg("subcommand")),
         };
 
         let subcommand = match subcommand.as_str() {
@@ -40,16 +41,16 @@ impl Args {
             "log" => Subcommand::Log,
             "drop" => Subcommand::Drop,
             "analyze" => Subcommand::Analyze,
-            _ => return Err("Invalid subcommand"),
+            _ => return Err(Error::InvalidSubcommand),
         };
 
         let database = match args.next() {
             Some(arg) => arg,
-            None => return Err("Must provide database"),
+            None => return Err(Error::MissingArg("database")),
         };
 
         if args.next().is_some() {
-            return Err("Invalid extra arg");
+            return Err(Error::TooManyArgs);
         }
 
         Ok(Self {
@@ -70,7 +71,7 @@ fn get_route() -> Result<Route> {
 fn parse_date(date: String) -> Result<Date> {
     let format = format_description!("[year]-[month]-[day]");
 
-    Date::parse(&date, &format).map_err(|_| "date must be a valid date in YYYY-MM-DD format")
+    Date::parse(&date, &format).map_err(|_| Error::InvalidDate)
 }
 
 fn get_ascent() -> Result<Ascent> {

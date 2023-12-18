@@ -3,8 +3,6 @@ use std::{
     path::Path,
 };
 
-pub type Result<T> = std::result::Result<T, &'static str>;
-
 pub fn input(prompt: &str) -> String {
     print!("{prompt}");
 

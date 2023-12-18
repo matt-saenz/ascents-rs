@@ -1,4 +1,7 @@
-use crate::utils::{self, Result};
+use crate::{
+    error::{Error, Result},
+    utils,
+};
 use regex::Regex;
 use std::fmt;
 use time::Date;
@@ -14,7 +17,7 @@ impl Route {
         let valid_yds = Regex::new(r"^5\.([0-9]|1[0-5][a-d])$").expect("Regex should compile");
 
         if !valid_yds.is_match(&grade) {
-            return Err("grade must be in YDS with no pluses, minuses, or slashes");
+            return Err(Error::InvalidGrade);
         }
 
         Ok(Self { name, grade, crag })
@@ -51,7 +54,7 @@ pub struct AscentDB {
 impl AscentDB {
     pub fn new(database: String) -> Result<Self> {
         if !utils::exists(&database) {
-            return Err("database not found, must be an already initialized ascent database");
+            return Err(Error::DatabaseNotFound);
         }
 
         Ok(Self { database })
