@@ -10,6 +10,7 @@ pub enum Error {
     MissingArg(&'static str),
     InvalidSubcommand,
     TooManyArgs,
+    SQLRelatedIssue(rusqlite::Error),
 }
 
 impl fmt::Display for Error {
@@ -28,6 +29,13 @@ impl fmt::Display for Error {
             Error::MissingArg(arg) => write!(f, "Must provide {arg}"),
             Error::InvalidSubcommand => write!(f, "Invalid subcommand"),
             Error::TooManyArgs => write!(f, "Too many args provided"),
+            Error::SQLRelatedIssue(e) => write!(f, "SQL-related issue: {e}"),
         }
+    }
+}
+
+impl From<rusqlite::Error> for Error {
+    fn from(error: rusqlite::Error) -> Self {
+        Error::SQLRelatedIssue(error)
     }
 }

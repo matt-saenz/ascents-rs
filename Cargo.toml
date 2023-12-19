@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 regex = "1.10.2"
+rusqlite = "0.30.0"
 time = { version = "0.3.30", features = ["macros", "parsing"] }
