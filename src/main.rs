@@ -1,4 +1,7 @@
-use ascents::cli::{self, Args};
+use ascents::{
+    cli::{self, Args},
+    error::Error,
+};
 use std::{env, process};
 
 fn main() {
@@ -11,7 +14,11 @@ fn main() {
     };
 
     if let Err(e) = cli::run(args) {
-        eprintln!("Error: {e}");
+        match e {
+            Error::User(e) => eprintln!("Error: {e}"),
+            Error::Internal(e) => eprintln!("Unexpected internal error: {e}"),
+        }
+
         process::exit(1);
     }
 }

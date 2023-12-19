@@ -1,12 +1,12 @@
 use crate::{
-    error::{Error, Result},
+    error::{Error, Result, User},
     utils,
 };
 use rusqlite::Connection;
 
 pub fn init_ascent_db(database: &String) -> Result<()> {
     if utils::exists(database) {
-        return Err(Error::DatabaseAlreadyExists);
+        return Err(Error::User(User::DatabaseAlreadyExists));
     }
 
     let conn = Connection::open(database)?;

@@ -1,5 +1,5 @@
 use crate::{
-    error::{Error, Result},
+    error::{Error, Result, User},
     init,
     models::{Ascent, AscentDB, Route},
     utils,
@@ -27,7 +27,7 @@ impl Args {
 
         let subcommand = match args.next() {
             Some(arg) => arg,
-            None => return Err(Error::MissingArg("subcommand")),
+            None => return Err(Error::User(User::MissingArg("subcommand"))),
         };
 
         let subcommand = match subcommand.as_str() {
@@ -41,16 +41,16 @@ impl Args {
             "log" => Subcommand::Log,
             "drop" => Subcommand::Drop,
             "analyze" => Subcommand::Analyze,
-            _ => return Err(Error::InvalidSubcommand),
+            _ => return Err(Error::User(User::InvalidSubcommand)),
         };
 
         let database = match args.next() {
             Some(arg) => arg,
-            None => return Err(Error::MissingArg("database")),
+            None => return Err(Error::User(User::MissingArg("database"))),
         };
 
         if args.next().is_some() {
-            return Err(Error::TooManyArgs);
+            return Err(Error::User(User::TooManyArgs));
         }
 
         Ok(Self {
@@ -71,7 +71,7 @@ fn get_route() -> Result<Route> {
 fn parse_date(date: String) -> Result<Date> {
     let format = format_description!("[year]-[month]-[day]");
 
-    Date::parse(&date, &format).map_err(|_| Error::InvalidDate)
+    Date::parse(&date, &format).map_err(|_| Error::User(User::InvalidDate))
 }
 
 fn get_ascent() -> Result<Ascent> {
