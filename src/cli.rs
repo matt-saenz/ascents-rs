@@ -4,7 +4,7 @@ use crate::{
     models::{Ascent, AscentDB, Route},
     utils,
 };
-use time::{macros::format_description, Date};
+use time::Date;
 
 pub const USAGE: &str = "Usage: ascents [-h] {init,log,drop,analyze} database";
 
@@ -69,9 +69,7 @@ fn get_route() -> Result<Route> {
 }
 
 fn parse_date(date: String) -> Result<Date> {
-    let format = format_description!("[year]-[month]-[day]");
-
-    Date::parse(&date, &format).map_err(|_| Error::User(User::InvalidDate))
+    Date::parse(&date, utils::DATE_FORMAT).map_err(|_| Error::User(User::InvalidDate))
 }
 
 fn get_ascent() -> Result<Ascent> {
@@ -89,12 +87,14 @@ pub fn run(args: Args) -> Result<()> {
         return Ok(());
     }
 
-    let db = AscentDB::new(args.database)?;
+    let db = AscentDB::new(&args.database)?;
 
     match args.subcommand {
         Subcommand::Log => {
             let ascent = get_ascent()?;
-            db.log_ascent(ascent);
+            println!("Logging ascent: {ascent}");
+            db.log_ascent(&ascent)?;
+            println!("Successfully logged the above ascent");
             Ok(())
         }
         _ => {

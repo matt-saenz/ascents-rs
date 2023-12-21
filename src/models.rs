@@ -3,6 +3,7 @@ use crate::{
     utils,
 };
 use regex::Regex;
+use rusqlite::Connection;
 use std::fmt;
 use time::Date;
 
@@ -48,26 +49,64 @@ impl fmt::Display for Ascent {
 }
 
 pub struct AscentDB {
-    database: String,
+    connection: Connection,
 }
 
 impl AscentDB {
-    pub fn new(database: String) -> Result<Self> {
-        if !utils::exists(&database) {
+    pub fn new(database: &String) -> Result<Self> {
+        if !utils::exists(database) {
             return Err(Error::User(User::DatabaseNotFound));
         }
 
-        Ok(Self { database })
+        let connection = Connection::open(database)?;
+
+        Ok(Self { connection })
     }
 
-    pub fn log_ascent(&self, ascent: Ascent) {
-        println!("Logged ascent in {}: {}", self.database, ascent);
+    pub fn log_ascent(&self, ascent: &Ascent) -> Result<()> {
+        let mut statement = self.connection.prepare(
+            "
+            SELECT date
+            FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            ",
+        )?;
+
+        let mut rows = statement.query_map(
+            (&ascent.route.name, &ascent.route.grade, &ascent.route.crag),
+            |row| row.get::<usize, String>(0),
+        )?;
+
+        if let Some(date) = rows.next() {
+            return Err(Error::User(User::AscentAlreadyLogged(date?)));
+        }
+
+        self.connection.execute(
+            "
+            INSERT INTO ascents(route, grade, crag, date)
+            VALUES(?, ?, ?, ?)
+            ",
+            (
+                &ascent.route.name,
+                &ascent.route.grade,
+                &ascent.route.crag,
+                format_date(ascent.date),
+            ),
+        )?;
+
+        Ok(())
     }
+}
+
+fn format_date(date: Date) -> String {
+    date.format(utils::DATE_FORMAT)
+        .expect("Should be able to format date")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use time::macros::date;
 
     #[test]
     fn invalid_grade() {
@@ -106,6 +145,114 @@ mod tests {
             );
 
             assert!(result.is_ok());
+        }
+    }
+
+    fn ascents() -> [Ascent; 8] {
+        [
+            Ascent::new(
+                Route::new(
+                    "Classic Route".to_string(),
+                    "5.12a".to_string(),
+                    "Some Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2023 - 01 - 01),
+            ),
+            Ascent::new(
+                Route::new(
+                    "Some Other Route".to_string(),
+                    "5.9".to_string(),
+                    "Some Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2022 - 01 - 01),
+            ),
+            Ascent::new(
+                Route::new(
+                    "New Route".to_string(),
+                    "5.10d".to_string(),
+                    "New Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2022 - 01 - 01),
+            ),
+            Ascent::new(
+                Route::new(
+                    "Another Route".to_string(),
+                    "5.10a".to_string(),
+                    "Another Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2023 - 01 - 01),
+            ),
+            Ascent::new(
+                Route::new(
+                    "Some Route".to_string(),
+                    "5.7".to_string(),
+                    "Some Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2023 - 01 - 01),
+            ),
+            Ascent::new(
+                Route::new(
+                    "Old Route".to_string(),
+                    "5.11a".to_string(),
+                    "Old Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2022 - 01 - 01),
+            ),
+            Ascent::new(
+                Route::new(
+                    "Cool Route".to_string(),
+                    "5.10a".to_string(),
+                    "Some Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2022 - 01 - 01),
+            ),
+            Ascent::new(
+                Route::new(
+                    "Last Route".to_string(),
+                    "5.7".to_string(),
+                    "Old Crag".to_string(),
+                )
+                .unwrap(),
+                date!(2023 - 01 - 01),
+            ),
+        ]
+    }
+
+    fn set_up_test_db() -> AscentDB {
+        let test_db = "test.db".to_string();
+
+        if !utils::exists(&test_db) {
+            panic!("{test_db} must be initialized to test");
+        }
+
+        let conn = Connection::open(&test_db).unwrap();
+        conn.execute("DELETE FROM ascents", ()).unwrap();
+
+        let db = AscentDB::new(&test_db).unwrap();
+
+        for ascent in &ascents() {
+            db.log_ascent(ascent).unwrap();
+        }
+
+        db
+    }
+
+    #[test]
+    fn log_ascent() {
+        let db = set_up_test_db();
+
+        for ascent in &ascents() {
+            assert_eq!(
+                db.log_ascent(ascent).unwrap_err(),
+                Error::User(User::AscentAlreadyLogged(format_date(ascent.date))),
+            );
         }
     }
 }

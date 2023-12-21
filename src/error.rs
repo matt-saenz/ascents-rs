@@ -2,6 +2,7 @@ use std::{fmt, result};
 
 pub type Result<T> = result::Result<T, Error>;
 
+#[derive(Debug, PartialEq)]
 pub enum Error {
     User(User),
     Internal(Internal),
@@ -22,6 +23,7 @@ impl From<rusqlite::Error> for Error {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum User {
     InvalidGrade,
     InvalidDate,
@@ -30,6 +32,7 @@ pub enum User {
     MissingArg(&'static str),
     InvalidSubcommand,
     TooManyArgs,
+    AscentAlreadyLogged(String),
 }
 
 impl fmt::Display for User {
@@ -48,10 +51,14 @@ impl fmt::Display for User {
             User::MissingArg(arg) => write!(f, "Must provide {arg}"),
             User::InvalidSubcommand => write!(f, "Invalid subcommand"),
             User::TooManyArgs => write!(f, "Too many args provided"),
+            User::AscentAlreadyLogged(date) => {
+                write!(f, "That ascent was already logged with a date of {date}")
+            }
         }
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Internal {
     SQLRelatedIssue(rusqlite::Error),
 }
