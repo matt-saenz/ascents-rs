@@ -8,7 +8,6 @@ use time::Date;
 
 pub const USAGE: &str = "Usage: ascents [-h] {init,log,drop,analyze} database";
 
-#[derive(PartialEq)]
 enum Subcommand {
     Init,
     Log,
@@ -81,30 +80,43 @@ fn get_ascent() -> Result<Ascent> {
     Ok(Ascent::new(route, date))
 }
 
-pub fn run(args: Args) -> Result<()> {
-    if args.subcommand == Subcommand::Init {
-        init::init_ascent_db(&args.database)?;
-        return Ok(());
-    }
+fn init(args: Args) -> Result<()> {
+    println!("Initializing ascent database: {}", args.database);
+    init::init_ascent_db(&args.database)?;
+    println!("Successfully initialized database");
+    Ok(())
+}
 
+fn log(args: Args) -> Result<()> {
     let db = AscentDB::new(&args.database)?;
 
+    let ascent = get_ascent()?;
+    println!("Logging ascent: {ascent}");
+
+    db.log_ascent(&ascent)?;
+    println!("Successfully logged the above ascent");
+
+    Ok(())
+}
+
+fn drop(args: Args) -> Result<()> {
+    let db = AscentDB::new(&args.database)?;
+
+    let route = get_route()?;
+    let ascent = db.find_ascent(route)?;
+    println!("Dropping ascent: {ascent}");
+
+    db.drop_ascent(ascent.route())?;
+    println!("Successfully dropped the above ascent");
+
+    Ok(())
+}
+
+pub fn run(args: Args) -> Result<()> {
     match args.subcommand {
-        Subcommand::Log => {
-            let ascent = get_ascent()?;
-            println!("Logging ascent: {ascent}");
-            db.log_ascent(&ascent)?;
-            println!("Successfully logged the above ascent");
-            Ok(())
-        }
-        Subcommand::Drop => {
-            let route = get_route()?;
-            let ascent = db.find_ascent(route)?;
-            println!("Dropping ascent: {ascent}");
-            db.drop_ascent(ascent.route())?;
-            println!("Successfully dropped the above ascent");
-            Ok(())
-        }
+        Subcommand::Init => init(args),
+        Subcommand::Log => log(args),
+        Subcommand::Drop => drop(args),
         _ => {
             println!("That subcommand has not been implemented yet!");
             Ok(())
