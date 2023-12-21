@@ -7,6 +7,7 @@ use rusqlite::Connection;
 use std::fmt;
 use time::Date;
 
+#[derive(Debug, PartialEq)]
 pub struct Route {
     name: String,
     grade: String,
@@ -31,6 +32,7 @@ impl fmt::Display for Route {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Ascent {
     route: Route,
     date: Date,
@@ -39,6 +41,10 @@ pub struct Ascent {
 impl Ascent {
     pub fn new(route: Route, date: Date) -> Self {
         Self { route, date }
+    }
+
+    pub fn route(&self) -> &Route {
+        &self.route
     }
 }
 
@@ -92,6 +98,54 @@ impl AscentDB {
                 &ascent.route.crag,
                 format_date(ascent.date),
             ),
+        )?;
+
+        Ok(())
+    }
+
+    pub fn find_ascent(&self, route: Route) -> Result<Ascent> {
+        let mut statement = self.connection.prepare(
+            "
+            SELECT date
+            FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            ",
+        )?;
+
+        let mut rows = statement.query_map((&route.name, &route.grade, &route.crag), |row| {
+            row.get::<usize, String>(0)
+        })?;
+
+        match rows.next() {
+            None => Err(Error::User(User::AscentNotFound)),
+            Some(date) => Ok(Ascent::new(
+                route,
+                Date::parse(&date?, utils::DATE_FORMAT).expect("Should be able to parse date"),
+            )),
+        }
+    }
+
+    pub fn drop_ascent(&self, route: &Route) -> Result<()> {
+        let mut statement = self.connection.prepare(
+            "
+            SELECT 1
+            FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            ",
+        )?;
+
+        let exists = statement.exists((&route.name, &route.grade, &route.crag))?;
+
+        if !exists {
+            return Err(Error::User(User::AscentNotFound));
+        }
+
+        self.connection.execute(
+            "
+            DELETE FROM ascents
+            WHERE route = ? AND grade = ? AND crag = ?
+            ",
+            (&route.name, &route.grade, &route.crag),
         )?;
 
         Ok(())
@@ -252,6 +306,48 @@ mod tests {
             assert_eq!(
                 db.log_ascent(ascent).unwrap_err(),
                 Error::User(User::AscentAlreadyLogged(format_date(ascent.date))),
+            );
+        }
+    }
+
+    #[test]
+    fn find_ascent() {
+        let db = set_up_test_db();
+
+        for ascent in ascents() {
+            let route = Route::new(
+                ascent.route.name.clone(),
+                ascent.route.grade.clone(),
+                ascent.route.crag.clone(),
+            )
+            .unwrap();
+
+            assert_eq!(ascent, db.find_ascent(route).unwrap());
+        }
+
+        let route = Route::new(
+            "Non-existent route".to_string(),
+            "5.7".to_string(),
+            "Non-existent crag".to_string(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            db.find_ascent(route).unwrap_err(),
+            Error::User(User::AscentNotFound),
+        );
+    }
+
+    #[test]
+    fn drop_ascent() {
+        let db = set_up_test_db();
+
+        for ascent in &ascents() {
+            let route = &ascent.route;
+            assert!(db.drop_ascent(route).is_ok());
+            assert_eq!(
+                db.drop_ascent(route).unwrap_err(),
+                Error::User(User::AscentNotFound),
             );
         }
     }

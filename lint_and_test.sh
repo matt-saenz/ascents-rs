@@ -3,6 +3,6 @@ set -e
 
 cargo fmt --check
 cargo clippy
-cargo test
+cargo test -- --test-threads 1
 
 echo 'Done!'

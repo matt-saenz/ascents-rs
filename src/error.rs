@@ -33,6 +33,7 @@ pub enum User {
     InvalidSubcommand,
     TooManyArgs,
     AscentAlreadyLogged(String),
+    AscentNotFound,
 }
 
 impl fmt::Display for User {
@@ -54,6 +55,7 @@ impl fmt::Display for User {
             User::AscentAlreadyLogged(date) => {
                 write!(f, "That ascent was already logged with a date of {date}")
             }
+            User::AscentNotFound => write!(f, "No ascent found matching provided route"),
         }
     }
 }

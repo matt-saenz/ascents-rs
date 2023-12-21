@@ -97,6 +97,14 @@ pub fn run(args: Args) -> Result<()> {
             println!("Successfully logged the above ascent");
             Ok(())
         }
+        Subcommand::Drop => {
+            let route = get_route()?;
+            let ascent = db.find_ascent(route)?;
+            println!("Dropping ascent: {ascent}");
+            db.drop_ascent(ascent.route())?;
+            println!("Successfully dropped the above ascent");
+            Ok(())
+        }
         _ => {
             println!("That subcommand has not been implemented yet!");
             Ok(())
