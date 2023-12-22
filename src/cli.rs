@@ -100,7 +100,8 @@ fn log(args: Args) -> Result<()> {
         utils::confirm("Continue logging");
     }
 
-    println!("Logging ascent: {ascent}");
+    println!("Ascent to be logged: {ascent}");
+    utils::confirm("Log the above ascent");
 
     db.log_ascent(&ascent)?;
     println!("Successfully logged the above ascent");
@@ -113,7 +114,9 @@ fn drop(args: Args) -> Result<()> {
 
     let route = get_route()?;
     let ascent = db.find_ascent(route)?;
-    println!("Dropping ascent: {ascent}");
+
+    println!("Ascent to be dropped: {ascent}");
+    utils::confirm("Drop the above ascent");
 
     db.drop_ascent(ascent.route())?;
     println!("Successfully dropped the above ascent");
