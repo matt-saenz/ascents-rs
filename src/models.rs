@@ -24,6 +24,10 @@ impl Route {
 
         Ok(Self { name, grade, crag })
     }
+
+    pub fn crag(&self) -> &String {
+        &self.crag
+    }
 }
 
 impl fmt::Display for Route {
@@ -67,6 +71,26 @@ impl AscentDB {
         let connection = Connection::open(database)?;
 
         Ok(Self { connection })
+    }
+
+    pub fn crags(&self) -> Result<Vec<String>> {
+        let mut crags = Vec::new();
+
+        let mut statement = self.connection.prepare(
+            "
+            SELECT DISTINCT crag
+            FROM ascents
+            ORDER BY crag
+            ",
+        )?;
+
+        let rows = statement.query_map((), |row| row.get(0))?;
+
+        for crag in rows {
+            crags.push(crag?);
+        }
+
+        Ok(crags)
     }
 
     pub fn log_ascent(&self, ascent: &Ascent) -> Result<()> {
@@ -296,6 +320,20 @@ mod tests {
         }
 
         db
+    }
+
+    #[test]
+    fn crags() {
+        let db = set_up_test_db();
+
+        let expected = vec![
+            "Another Crag".to_string(),
+            "New Crag".to_string(),
+            "Old Crag".to_string(),
+            "Some Crag".to_string(),
+        ];
+
+        assert_eq!(db.crags().unwrap(), expected);
     }
 
     #[test]

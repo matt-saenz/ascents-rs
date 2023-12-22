@@ -1,6 +1,7 @@
 use std::{
     io::{self, Write},
     path::Path,
+    process,
 };
 use time::{format_description::FormatItem, macros::format_description};
 
@@ -20,6 +21,23 @@ pub fn input(prompt: &str) -> String {
     let resp: &str = resp.trim();
 
     resp.to_string()
+}
+
+pub fn confirm(prompt: &str) {
+    let prompt = format!("{prompt} (y/n)? ");
+    let mut resp = input(&prompt);
+
+    loop {
+        if resp == "y" {
+            break;
+        }
+
+        if resp == "n" {
+            process::exit(0);
+        }
+
+        resp = input("Oops! Valid inputs are 'y' or 'n'. Please try again: ");
+    }
 }
 
 pub fn exists(path: &String) -> bool {

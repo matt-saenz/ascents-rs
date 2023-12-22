@@ -91,6 +91,15 @@ fn log(args: Args) -> Result<()> {
     let db = AscentDB::new(&args.database)?;
 
     let ascent = get_ascent()?;
+    let crag = ascent.route().crag();
+    let known_crags = db.crags()?;
+
+    if !known_crags.is_empty() && !known_crags.contains(crag) {
+        println!("Warning: '{crag}' is not a known crag");
+        println!("Known crags currently include:\n{}", known_crags.join("\n"));
+        utils::confirm("Continue logging");
+    }
+
     println!("Logging ascent: {ascent}");
 
     db.log_ascent(&ascent)?;
