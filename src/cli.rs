@@ -1,4 +1,5 @@
 use crate::{
+    analyze,
     error::{Error, Result, User},
     init,
     models::{Ascent, AscentDB, Route},
@@ -124,15 +125,18 @@ fn drop(args: Args) -> Result<()> {
     Ok(())
 }
 
+fn analyze(args: Args) -> Result<()> {
+    let analysis = analyze::analyze_ascent_db(&args.database)?;
+    println!("{analysis}");
+    Ok(())
+}
+
 pub fn run(args: Args) -> Result<()> {
     match args.subcommand {
         Subcommand::Init => init(args),
         Subcommand::Log => log(args),
         Subcommand::Drop => drop(args),
-        _ => {
-            println!("That subcommand has not been implemented yet!");
-            Ok(())
-        }
+        Subcommand::Analyze => analyze(args),
     }
 }
 

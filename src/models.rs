@@ -174,6 +174,19 @@ impl AscentDB {
 
         Ok(())
     }
+
+    pub fn total_count(&self) -> Result<u32> {
+        let total_count = self.connection.query_row(
+            "
+            SELECT count(*)
+            FROM ascents
+            ",
+            (),
+            |row| row.get(0),
+        )?;
+
+        Ok(total_count)
+    }
 }
 
 fn format_date(date: Date) -> String {
@@ -388,5 +401,11 @@ mod tests {
                 Error::User(User::AscentNotFound),
             );
         }
+    }
+
+    #[test]
+    fn total_count() {
+        let db = set_up_test_db();
+        assert_eq!(db.total_count().unwrap(), 8);
     }
 }
