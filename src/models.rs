@@ -58,6 +58,22 @@ impl fmt::Display for Ascent {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Count {
+    category: String,
+    value: u32,
+}
+
+impl Count {
+    pub fn category(&self) -> &String {
+        &self.category
+    }
+
+    pub fn value(&self) -> u32 {
+        self.value
+    }
+}
+
 pub struct AscentDB {
     connection: Connection,
 }
@@ -186,6 +202,32 @@ impl AscentDB {
         )?;
 
         Ok(total_count)
+    }
+
+    pub fn crag_counts(&self) -> Result<Vec<Count>> {
+        let mut crag_counts = Vec::new();
+
+        let mut statement = self.connection.prepare(
+            "
+            SELECT crag, count(*)
+            FROM ascents
+            GROUP BY crag
+            ORDER BY crag
+            ",
+        )?;
+
+        let rows = statement.query_map((), |row| {
+            Ok(Count {
+                category: row.get(0)?,
+                value: row.get(1)?,
+            })
+        })?;
+
+        for count in rows {
+            crag_counts.push(count?);
+        }
+
+        Ok(crag_counts)
     }
 }
 
@@ -407,5 +449,31 @@ mod tests {
     fn total_count() {
         let db = set_up_test_db();
         assert_eq!(db.total_count().unwrap(), 8);
+    }
+
+    #[test]
+    fn crag_counts() {
+        let db = set_up_test_db();
+
+        let expected = vec![
+            Count {
+                category: "Another Crag".to_string(),
+                value: 1,
+            },
+            Count {
+                category: "New Crag".to_string(),
+                value: 1,
+            },
+            Count {
+                category: "Old Crag".to_string(),
+                value: 2,
+            },
+            Count {
+                category: "Some Crag".to_string(),
+                value: 4,
+            },
+        ];
+
+        assert_eq!(db.crag_counts().unwrap(), expected);
     }
 }
