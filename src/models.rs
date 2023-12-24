@@ -229,6 +229,23 @@ impl AscentDB {
 
         gather_counts(statement)
     }
+
+    pub fn grade_counts(&self) -> Result<Vec<Count>> {
+        let statement = self.connection.prepare(
+            "
+            SELECT grade_counts.grade, grade_counts.count
+            FROM (
+                SELECT grade, count(*) AS count
+                FROM ascents
+                GROUP BY grade
+            ) AS grade_counts
+            LEFT JOIN grade_info USING(grade)
+            ORDER BY grade_info.grade_number, grade_info.grade_letter
+            ",
+        )?;
+
+        gather_counts(statement)
+    }
 }
 
 fn format_date(date: Date) -> String {
@@ -510,5 +527,39 @@ mod tests {
         ];
 
         assert_eq!(db.crag_counts().unwrap(), expected);
+    }
+
+    #[test]
+    fn grade_counts() {
+        let db = set_up_test_db();
+
+        let expected = vec![
+            Count {
+                category: "5.7".to_string(),
+                value: 2,
+            },
+            Count {
+                category: "5.9".to_string(),
+                value: 1,
+            },
+            Count {
+                category: "5.10a".to_string(),
+                value: 2,
+            },
+            Count {
+                category: "5.10d".to_string(),
+                value: 1,
+            },
+            Count {
+                category: "5.11a".to_string(),
+                value: 1,
+            },
+            Count {
+                category: "5.12a".to_string(),
+                value: 1,
+            },
+        ];
+
+        assert_eq!(db.grade_counts().unwrap(), expected);
     }
 }
