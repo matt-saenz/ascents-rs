@@ -204,10 +204,21 @@ impl AscentDB {
         Ok(total_count)
     }
 
-    pub fn crag_counts(&self) -> Result<Vec<Count>> {
-        let mut crag_counts = Vec::new();
+    pub fn year_counts(&self) -> Result<Vec<Count>> {
+        let statement = self.connection.prepare(
+            "
+            SELECT strftime('%Y', date) AS year, count(*)
+            FROM ascents
+            GROUP BY year
+            ORDER BY year
+            ",
+        )?;
 
-        let mut statement = self.connection.prepare(
+        gather_counts(statement)
+    }
+
+    pub fn crag_counts(&self) -> Result<Vec<Count>> {
+        let statement = self.connection.prepare(
             "
             SELECT crag, count(*)
             FROM ascents
@@ -216,24 +227,30 @@ impl AscentDB {
             ",
         )?;
 
-        let rows = statement.query_map((), |row| {
-            Ok(Count {
-                category: row.get(0)?,
-                value: row.get(1)?,
-            })
-        })?;
-
-        for count in rows {
-            crag_counts.push(count?);
-        }
-
-        Ok(crag_counts)
+        gather_counts(statement)
     }
 }
 
 fn format_date(date: Date) -> String {
     date.format(utils::DATE_FORMAT)
         .expect("Should be able to format date")
+}
+
+fn gather_counts(mut statement: rusqlite::Statement) -> Result<Vec<Count>> {
+    let mut counts = Vec::new();
+
+    let rows = statement.query_map((), |row| {
+        Ok(Count {
+            category: row.get(0)?,
+            value: row.get(1)?,
+        })
+    })?;
+
+    for count in rows {
+        counts.push(count?);
+    }
+
+    Ok(counts)
 }
 
 #[cfg(test)]
@@ -449,6 +466,24 @@ mod tests {
     fn total_count() {
         let db = set_up_test_db();
         assert_eq!(db.total_count().unwrap(), 8);
+    }
+
+    #[test]
+    fn year_counts() {
+        let db = set_up_test_db();
+
+        let expected = vec![
+            Count {
+                category: "2022".to_string(),
+                value: 4,
+            },
+            Count {
+                category: "2023".to_string(),
+                value: 4,
+            },
+        ];
+
+        assert_eq!(db.year_counts().unwrap(), expected);
     }
 
     #[test]
